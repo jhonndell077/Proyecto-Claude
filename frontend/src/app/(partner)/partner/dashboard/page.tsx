@@ -87,7 +87,7 @@ export default function PartnerDashboardPage() {
 
         {/* Quick links */}
         <div className="grid grid-cols-3 gap-3">
-          <Link href="/products" className="card text-center py-4 hover:shadow-md transition-shadow">
+          <Link href="/partner/products" className="card text-center py-4 hover:shadow-md transition-shadow">
             <p className="text-2xl mb-1">🍽️</p><p className="text-xs font-semibold text-gray-700">Productos</p>
           </Link>
           <Link href="/partner/orders" className="card text-center py-4 hover:shadow-md transition-shadow">

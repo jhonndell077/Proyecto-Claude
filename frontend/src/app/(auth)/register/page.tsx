@@ -28,7 +28,7 @@ function RegisterForm() {
       const { data } = await authApi.register(form);
       setAuth(data.data.user, data.data.token);
       toast.success("¡Cuenta creada!");
-      if (form.role === "PARTNER") router.push("/dashboard");
+      if (form.role === "PARTNER") router.push("/partner/dashboard");
       else if (form.role === "DRIVER") router.push("/driver/dashboard");
       else router.push("/home");
     } catch (err: unknown) {

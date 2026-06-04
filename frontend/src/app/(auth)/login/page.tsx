@@ -21,7 +21,7 @@ export default function LoginPage() {
       toast.success("¡Bienvenido!");
       const role = data.data.user.role;
       if (role === "ADMIN" || role === "SUPER_ADMIN") router.push("/admin/dashboard");
-      else if (role === "PARTNER") router.push("/dashboard");
+      else if (role === "PARTNER") router.push("/partner/dashboard");
       else if (role === "DRIVER") router.push("/driver/dashboard");
       else router.push("/home");
     } catch (err: unknown) {
