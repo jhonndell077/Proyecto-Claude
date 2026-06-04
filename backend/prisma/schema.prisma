@@ -1,0 +1,374 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  CLIENT
+  PARTNER
+  DRIVER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum BusinessStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+  INACTIVE
+}
+
+enum BusinessCategory {
+  RESTAURANT
+  FAST_FOOD
+  CAFE
+  PHARMACY
+  GROCERY
+  BAKERY
+  FOOD_TRUCK
+  DESSERTS
+  BEVERAGES
+  OTHER
+}
+
+enum OrderStatus {
+  RECEIVED
+  ACCEPTED
+  PREPARING
+  READY
+  ASSIGNED
+  PICKED_UP
+  ON_WAY
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum OrderType {
+  DELIVERY
+  PICKUP
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum DriverStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum VehicleType {
+  MOTORCYCLE
+  CAR
+  BICYCLE
+  WALKING
+}
+
+enum PlanStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PromotionType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_DELIVERY
+}
+
+enum ReviewTarget {
+  BUSINESS
+  DRIVER
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  phone     String?
+  password  String
+  role      Role       @default(CLIENT)
+  status    UserStatus @default(ACTIVE)
+  avatar    String?
+
+  addresses Address[]
+  orders    Order[]    @relation("ClientOrders")
+  business  Business?
+  driver    Driver?
+  reviews   Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Address {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String
+  street    String
+  city      String
+  province  String
+  reference String?
+  lat       Float?
+  lng       Float?
+  isDefault Boolean @default(false)
+  orders    Order[]
+
+  createdAt DateTime @default(now())
+
+  @@map("addresses")
+}
+
+model Plan {
+  id             String     @id @default(cuid())
+  name           String
+  description    String
+  price          Float
+  maxProducts    Int        @default(-1)
+  commissionRate Float      @default(15)
+  isHighlighted  Boolean    @default(false)
+  features       String[]
+  status         PlanStatus @default(ACTIVE)
+  sortOrder      Int        @default(0)
+
+  businesses         Business[]
+  membershipPayments MembershipPayment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("plans")
+}
+
+model Business {
+  id             String           @id @default(cuid())
+  userId         String           @unique
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  logo           String?
+  cover          String?
+  category       BusinessCategory @default(RESTAURANT)
+  address        String
+  city           String
+  province       String
+  phone          String
+  email          String?
+  lat            Float?
+  lng            Float?
+  status         BusinessStatus   @default(PENDING)
+  isOpen         Boolean          @default(false)
+  openTime       String?
+  closeTime      String?
+  planId         String?
+  plan           Plan?            @relation(fields: [planId], references: [id])
+  commissionRate Float            @default(15)
+  rating         Float            @default(0)
+  reviewCount    Int              @default(0)
+  deliveryFee    Float            @default(0)
+  minOrder       Float            @default(0)
+  estimatedTime  Int              @default(30)
+  tags           String[]
+  isHighlighted  Boolean          @default(false)
+
+  productCategories  ProductCategory[]
+  products           Product[]
+  orders             Order[]
+  promotions         Promotion[]
+  membershipPayments MembershipPayment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("businesses")
+}
+
+model ProductCategory {
+  id         String    @id @default(cuid())
+  businessId String
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  sortOrder  Int       @default(0)
+  products   Product[]
+
+  @@map("product_categories")
+}
+
+model Product {
+  id          String           @id @default(cuid())
+  businessId  String
+  business    Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    ProductCategory? @relation(fields: [categoryId], references: [id])
+  name        String
+  description String?
+  image       String?
+  price       Float
+  cost        Float            @default(0)
+  isAvailable Boolean          @default(true)
+  isFeatured  Boolean          @default(false)
+
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("products")
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  clientId        String
+  client          User          @relation("ClientOrders", fields: [clientId], references: [id])
+  businessId      String
+  business        Business      @relation(fields: [businessId], references: [id])
+  driverId        String?
+  driver          Driver?       @relation(fields: [driverId], references: [id])
+  addressId       String?
+  address         Address?      @relation(fields: [addressId], references: [id])
+  deliveryAddress String?
+  status          OrderStatus   @default(RECEIVED)
+  type            OrderType     @default(DELIVERY)
+  subtotal        Float
+  deliveryFee     Float         @default(0)
+  platformFee     Float         @default(0)
+  total           Float
+  paymentMethod   PaymentMethod @default(CASH)
+  paymentStatus   PaymentStatus @default(PENDING)
+  notes           String?
+  estimatedTime   Int?
+  cancelReason    String?
+
+  items         OrderItem[]
+  statusHistory OrderStatusHistory[]
+  review        Review?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  productName String
+  price       Float
+  quantity    Int
+  notes       String?
+
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  note      String?
+  timestamp DateTime    @default(now())
+
+  @@map("order_status_history")
+}
+
+model Driver {
+  id           String       @id @default(cuid())
+  userId       String       @unique
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleType  VehicleType  @default(MOTORCYCLE)
+  licensePlate String?
+  status       DriverStatus @default(PENDING)
+  isAvailable  Boolean      @default(false)
+  rating       Float        @default(0)
+  reviewCount  Int          @default(0)
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("drivers")
+}
+
+model Review {
+  id         String       @id @default(cuid())
+  orderId    String       @unique
+  order      Order        @relation(fields: [orderId], references: [id])
+  clientId   String
+  client     User         @relation(fields: [clientId], references: [id])
+  targetId   String
+  targetType ReviewTarget
+  rating     Int
+  comment    String?
+
+  createdAt DateTime @default(now())
+
+  @@map("reviews")
+}
+
+model Promotion {
+  id          String        @id @default(cuid())
+  businessId  String
+  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  type        PromotionType
+  value       Float
+  minOrder    Float         @default(0)
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean       @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@map("promotions")
+}
+
+model MembershipPayment {
+  id         String        @id @default(cuid())
+  businessId String
+  business   Business      @relation(fields: [businessId], references: [id])
+  planId     String
+  plan       Plan          @relation(fields: [planId], references: [id])
+  amount     Float
+  status     PaymentStatus @default(PENDING)
+  period     String
+  paidAt     DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("membership_payments")
+}
