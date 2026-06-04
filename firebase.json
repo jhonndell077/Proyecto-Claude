@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "pepepedidos-b4bd0",
     "public": "frontend/out",
     "ignore": [
       "firebase.json",
