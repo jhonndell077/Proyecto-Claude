@@ -14,6 +14,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 if (env.NODE_ENV !== "test") app.use(morgan("dev"));
 
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api", routes);
 app.use(errorMiddleware);
 
