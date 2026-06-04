@@ -35,7 +35,7 @@ export default function CartPage() {
       });
       clearCart();
       toast.success("¡Pedido realizado!");
-      router.push(`/orders/${data.data.id}`);
+      router.push(`/orders/track?id=${data.data.id}`);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Error al realizar el pedido";
       toast.error(msg);

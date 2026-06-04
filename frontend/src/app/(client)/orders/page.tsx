@@ -31,7 +31,7 @@ export default function OrdersPage() {
         ) : (
           <div className="space-y-3">
             {(data ?? []).map((order: { id: string; business?: { name?: string }; status: string; total: number; items: { productName: string }[]; createdAt: string }) => (
-              <Link key={order.id} href={`/orders/${order.id}`} className="card flex items-center gap-4 hover:shadow-md transition-shadow">
+              <Link key={order.id} href={`/orders/track?id=${order.id}`} className="card flex items-center gap-4 hover:shadow-md transition-shadow">
                 <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
                   🍽️
                 </div>

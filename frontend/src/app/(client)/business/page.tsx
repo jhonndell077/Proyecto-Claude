@@ -1,6 +1,7 @@
 "use client";
+import { Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { businessApi } from "@/lib/api";
 import { useCartStore } from "@/store/cart.store";
 import { useAuthStore } from "@/store/auth.store";
@@ -9,8 +10,9 @@ import { formatCurrency } from "@/lib/utils";
 import { ArrowLeft, Clock, Plus, ShoppingCart, Star, Truck } from "lucide-react";
 import toast from "react-hot-toast";
 
-export default function BusinessPage() {
-  const { id } = useParams<{ id: string }>();
+function BusinessPageContent() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") ?? "";
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const { addItem, itemCount } = useCartStore();
@@ -18,6 +20,7 @@ export default function BusinessPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["business", id],
     queryFn: () => businessApi.getById(id).then((r) => r.data.data),
+    enabled: !!id,
   });
 
   const handleAddToCart = (product: Product) => {
@@ -42,7 +45,6 @@ export default function BusinessPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Hero */}
       <div className="h-52 bg-gradient-to-br from-brand-200 to-brand-400 relative">
         {data?.cover && <img src={data.cover} alt={data.name} className="w-full h-full object-cover" />}
         <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 p-2 rounded-xl shadow">
@@ -51,7 +53,6 @@ export default function BusinessPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4">
-        {/* Business info */}
         <div className="card -mt-6 mb-4">
           <div className="flex items-start gap-3">
             {data?.logo && <img src={data.logo} alt="" className="w-16 h-16 rounded-xl object-cover border-2 border-white shadow" />}
@@ -68,7 +69,6 @@ export default function BusinessPage() {
           </div>
         </div>
 
-        {/* Menu */}
         {(data?.productCategories ?? []).map((cat: ProductCategory) => (
           <div key={cat.id} className="mb-6">
             <h2 className="text-base font-bold text-gray-800 mb-3 px-1">{cat.name}</h2>
@@ -85,11 +85,7 @@ export default function BusinessPage() {
                     {product.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{product.description}</p>}
                     <p className="text-brand-600 font-bold text-base mt-1">{formatCurrency(product.price)}</p>
                   </div>
-                  <button
-                    onClick={() => handleAddToCart(product)}
-                    disabled={!data?.isOpen}
-                    className="btn-primary p-2 rounded-xl disabled:opacity-40"
-                  >
+                  <button onClick={() => handleAddToCart(product)} disabled={!data?.isOpen} className="btn-primary p-2 rounded-xl disabled:opacity-40">
                     <Plus size={20} />
                   </button>
                 </div>
@@ -99,13 +95,9 @@ export default function BusinessPage() {
         ))}
       </div>
 
-      {/* Floating cart */}
       {cartItems > 0 && (
         <div className="fixed bottom-6 left-0 right-0 px-4 z-50">
-          <button
-            onClick={() => router.push("/cart")}
-            className="w-full max-w-sm mx-auto flex items-center justify-between bg-brand-500 text-white px-5 py-4 rounded-2xl shadow-xl font-bold"
-          >
+          <button onClick={() => router.push("/cart")} className="w-full max-w-sm mx-auto flex items-center justify-between bg-brand-500 text-white px-5 py-4 rounded-2xl shadow-xl font-bold">
             <span className="bg-brand-400/60 text-white text-sm px-2 py-0.5 rounded-lg">{cartItems}</span>
             <span className="flex items-center gap-2"><ShoppingCart size={20} />Ver carrito</span>
             <span>{formatCurrency(cartTotal)}</span>
@@ -114,4 +106,8 @@ export default function BusinessPage() {
       )}
     </div>
   );
+}
+
+export default function BusinessPage() {
+  return <Suspense><BusinessPageContent /></Suspense>;
 }

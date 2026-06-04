@@ -13,7 +13,7 @@ const categoryEmoji: Record<string, string> = {
 
 export default function BusinessCard({ business }: Props) {
   return (
-    <Link href={`/business/${business.id}`} className="card hover:shadow-md transition-shadow cursor-pointer block overflow-hidden p-0">
+    <Link href={`/business?id=${business.id}`} className="card hover:shadow-md transition-shadow cursor-pointer block overflow-hidden p-0">
       {/* Cover */}
       <div className="h-36 bg-gradient-to-br from-brand-100 to-brand-200 relative flex items-center justify-center overflow-hidden">
         {business.cover ? (
